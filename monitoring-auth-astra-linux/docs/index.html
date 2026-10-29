@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="10">
+    <title>Security Monitor - Astra Linux</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            min-width: 180px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .card b {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .card .value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .alert-card {
+            background: #ffe5e5;
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .critical-card {
+            background: #ff0000;
+            color: white;
+            border-left: 5px solid #c0392b;
+            animation: pulse 2s infinite;
+        }
+        
+        .critical-card b {
+            color: white;
+        }
+        
+        .critical-card .value {
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+        
+        .critical-section {
+            background: #ffcccc;
+            border: 3px solid #c0392b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(192, 57, 43, 0.3);
+        }
+        
+        .critical-section h2 {
+            color: #c0392b;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .critical-icon {
+            font-size: 32px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        .critical-table {
+            background: white;
+            border: 2px solid #e74c3c;
+        }
+        
+        .critical-table th {
+            background: #e74c3c;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .critical-table tr:nth-child(even) {
+            background: #fff5f5;
+        }
+        
+        .critical-table tr:hover {
+            background: #ffe0e0;
+        }
+        
+        .alert-section {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .alert-section h2 {
+            color: #856404;
+            margin-top: 0;
+        }
+        
+        .alert-table {
+            background: white;
+            border: 2px solid #ffc107;
+        }
+        
+        .alert-table th {
+            background: #ffc107;
+            color: #212529;
+            font-weight: bold;
+        }
+        
+        .alert-table tr:nth-child(even) {
+            background: #fffbf0;
+        }
+        
+        .alert-table tr:hover {
+            background: #fff3cd;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .ssh {
+            background: #fff5cc;
+        }
+        
+        .auth {
+            background: #e6f3ff;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .badge-critical {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .badge-high {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .badge-medium {
+            background: #3498db;
+            color: white;
+        }
+        
+        .no-alerts {
+            color: #27ae60;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        hr {
+            border: none;
+            border-top: 2px solid #bdc3c7;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Система мониторинга безопасности Astra Linux</h1>
+    
+    <h2>📊 Общая статистика</h2>
+    <div class="stats-container">
+        <div class="card">
+            <b>Всего событий</b>
+            <div class="value">{{ total_events }}</div>
+        </div>
+        <div class="card">
+            <b>SSH ошибки</b>
+            <div class="value">{{ ssh_failed }}</div>
+        </div>
+        <div class="card">
+            <b>AUTH ошибки</b>
+            <div class="value">{{ auth_failed }}</div>
+        </div>
+        <div class="card alert-card">
+            <b>Активные алерты</b>
+            <div class="value">{{ active_alerts }}</div>
+        </div>
+        {% if critical_alerts_count > 0 %}
+        <div class="card critical-card">
+            <b>⚠️ КРИТИЧЕСКИЕ</b>
+            <div class="value">{{ critical_alerts_count }}</div>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if critical_alerts %}
+    <!-- КРИТИЧЕСКИЕ АЛЕРТЫ -->
+    <div class="critical-section">
+        <h2>
+            <span class="critical-icon">🚨</span>
+            КРИТИЧЕСКИЕ ИНЦИДЕНТЫ
+        </h2>
+        <table class="critical-table">
+            <tr>
+                <th>ID</th>
+                <th>Тип</th>
+                <th>Уровень</th>
+                <th>Пользователь</th>
+                <th>IP адрес</th>
+                <th>Попыток</th>
+                <th>Время создания</th>
+            </tr>
+            {% for alert in critical_alerts %}
+            <tr>
+                <td>{{ alert.id }}</td>
+                <td><span class="badge badge-critical">{{ alert.alert_type }}</span></td>
+                <td><span class="badge badge-critical">{{ alert.severity }}</span></td>
+                <td><b>{{ alert.username }}</b></td>
+                <td><code>{{ alert.source_ip }}</code></td>
+                <td><b>{{ alert.attempts }}</b></td>
+                <td>{{ alert.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+    
+    <!-- ОБЫЧНЫЕ АЛЕРТЫ -->
+    <div class="alert-section">
+        <h2>⚡ Активные инциденты (не критические)</h2>
+        {% if alerts %}
+        <table class="alert-table">
+            <tr>
+                <th>ID</th>
+                <th>Тип</th>
+                <th>Уровень</th>
+                <th>Пользователь</th>
+                <th>IP адрес</th>
+                <th>Попыток</th>
+                <th>Время</th>
+            </tr>
+            {% for alert in alerts %}
+            <tr>
+                <td>{{ alert.id }}</td>
+                <td><span class="badge badge-high">{{ alert.alert_type }}</span></td>
+                <td><span class="badge badge-high">{{ alert.severity }}</span></td>
+                <td>{{ alert.username }}</td>
+                <td><code>{{ alert.source_ip }}</code></td>
+                <td>{{ alert.attempts }}</td>
+                <td>{{ alert.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <div class="no-alerts">✓ Нет активных инцидентов</div>
+        {% endif %}
+    </div>
+    
+    <hr>
+    
+    <!-- ПОСЛЕДНИЕ СОБЫТИЯ -->
+    <h2>📋 Последние события</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Тип события</th>
+            <th>Пользователь</th>
+            <th>IP адрес</th>
+            <th>Уровень</th>
+            <th>Время</th>
+        </tr>
+        {% for event in events %}
+        <tr class="{% if event.event_type == 'SSH_FAILED' %}ssh{% else %}auth{% endif %}">
+            <td>{{ event.id }}</td>
+            <td><span class="badge {% if event.severity == 'HIGH' %}badge-high{% else %}badge-medium{% endif %}">{{ event.event_type }}</span></td>
+            <td>{{ event.user }}</td>
+            <td><code>{{ event.source_ip }}</code></td>
+            <td>{{ event.severity }}</td>
+            <td>{{ event.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
