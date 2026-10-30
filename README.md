@@ -22,7 +22,7 @@
 ![Схема системы](docs/scheme_of_system.png)
 
 ### Структура проекта
-
+```text
 monitoring-auth-astra-linux/
 ├── parser/
 │   └── parser.py
@@ -40,7 +40,7 @@ monitoring-auth-astra-linux/
 │   ├── scheme_of_system.png
 ├── requirements.txt
 └── README.md
-
+```
 ### Установка
 
 1. Клонирование репозитория.
